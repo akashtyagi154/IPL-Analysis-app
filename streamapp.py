@@ -5,11 +5,100 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv('ipl.csv')
+df['year'] = pd.to_datetime(df.date).dt.year
+df = df[df.year>2016]
 
 st.sidebar.header('IPL statistical analysis')
-side_choice = st.sidebar.selectbox('Select', ['Batting','Bowling','Teams','Venue'])
+side_choice = st.sidebar.selectbox('Select', ['Statistical Predictions','Batting','Bowling','Teams','Venue'])
 
-if side_choice == 'Batting':
+
+
+if side_choice == 'Statistical Predictions':
+    form = st.form(key='my-form')
+    venue = form.selectbox('Select venue', df.venue.unique(), key=1)
+    team1 = form.selectbox('Select Team', df.team1.unique(), key=2)
+    team2 = form.selectbox('vs', df.team2.unique(), key=3)
+    submit = form.form_submit_button('Predict')
+    
+    df['year'] = pd.to_datetime(df.date).dt.year
+    df = df[df.year>2016]
+    df1 = df[['venue','team1','team2','winner']]
+    df1.fillna(0,inplace=True)
+    X= pd.get_dummies(df1[['venue','team1','team2']],drop_first=True)
+    y = df1[['winner']]
+    df1.fillna(0,inplace=True)
+
+    eg = df1.winner.value_counts()
+    win = pd.DataFrame(eg).index
+    winners=[]
+    for i  in win:
+        winners.append(i)
+
+
+    def rank_team(x):
+        for index,i in enumerate(winners):
+            if x==i:
+                return index
+    df1['winner'] = df1.winner.apply(lambda x: rank_team(x))
+    # from sklearn.preprocessing import MultiLabelBinarizer
+    # mlb = MultiLabelBinarizer()
+
+
+    X= pd.get_dummies(df1[['venue','team1','team2']])
+    # y = mlb.fit_transform(df1[['winner']])
+    y = df1.winner
+
+    model = LogisticRegression()
+
+    # sc = StandardScaler()
+    # X_train = sc.fit_transform(X_train)
+    # X_test = sc.transform(X_test)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.1, random_state = None)
+
+
+    model.fit(X_train,y_train)
+    # from sklearn.metrics import confusion_matrix
+    # print(confusion_matrix(y_test,pred))
+
+    # (accuracy_score(y_test,pred)*100)
+
+
+
+    if submit:
+
+        # from sklearn.metrics import confusion_matrix
+        # print(confusion_matrix(y_test,pred))
+        df4=df1.drop('winner',axis=1)
+        input = df4.iloc[0]
+        input['venue']=venue
+        input['team1']=team1
+        input['team2']=team2
+        
+        too_pred = X_train.iloc[0]
+        to_pred = X_train.iloc[0]
+        for index,i in enumerate(too_pred):
+            to_pred[index]=0
+        
+        to_pred[f"""venue_{input['venue']}"""]=1
+        to_pred[f"""team1_{input['team1']}"""]=1
+        to_pred[f"""team2_{input['team2']}"""]=1
+
+        pred=np.array(to_pred).reshape(1,-1)
+
+        for index,winn in enumerate(winners):
+            if index==model.predict(pred)[0]:
+                st.header(winn)
+                break
+
+
+elif side_choice == 'Batting':
     
 
     st.title('IPL Batting statistics')
