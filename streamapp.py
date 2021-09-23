@@ -12,14 +12,17 @@ from sklearn.metrics import accuracy_score
 
 df = pd.read_csv('ipl.csv')
 df['year'] = pd.to_datetime(df.date).dt.year
-df = df[df.year>2016]
+teams=['Sunrisers Hyderabad','Kings XI Punjab','Royal Challengers Bangalore','Mumbai Indians','Kolkata Knight Riders','Delhi Capitals','Chennai Super Kings','Rajasthan Royals']
 
+
+df = df[(df.team1.isin(teams)) & (df.year>2014) & (df.team2.isin(teams))]
 st.sidebar.header('IPL statistical analysis')
 side_choice = st.sidebar.selectbox('Select', ['Statistical Predictions','Batting','Bowling','Teams','Venue'])
 
 
 
 if side_choice == 'Statistical Predictions':
+    st.title('Match winner prediction')
     form = st.form(key='my-form')
     venue = form.selectbox('Select venue', df.venue.unique(), key=1)
     team1 = form.selectbox('Select Team', df.team1.unique(), key=2)
@@ -94,9 +97,8 @@ if side_choice == 'Statistical Predictions':
 
         for index,winn in enumerate(winners):
             if index==model.predict(pred)[0]:
-                st.header(winn)
+                st.subheader(winn)
                 break
-
 
 elif side_choice == 'Batting':
     
@@ -241,8 +243,6 @@ elif side_choice == 'Bowling':
     fig = px.histogram(bowl_plot1.iloc[upto], x="bowler", y="value",color='variable',hover_data=['total_balls_bowled'])
     # Plot!
     st.plotly_chart(fig, use_container_width=True)
-
-
 
 elif side_choice == 'Teams' or side_choice == 'Venue':
     st.header('In development')
